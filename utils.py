@@ -59,7 +59,7 @@ def preprocess_task1(file, tokenizer, prompt_template=None, sep_token="<sep>"):
     return tokenized_dataset
 
 
-def preprocess_task2(file, prompt_template=None, sep_token="<sep>"):
+def preprocess_task2(file, tokenizer, prompt_template=None, sep_token="<sep>"):
     # 文件存在性检查
     if not os.path.isfile(file):
         raise FileNotFoundError(f"Data file not found: {file}")
@@ -115,7 +115,7 @@ def preprocess_task2(file, prompt_template=None, sep_token="<sep>"):
         labels.append(correct_pos)
 
     dataset = Dataset.from_dict({"text": texts, "label": labels})
-    tokenized_dataset = dataset.map(tokenize_function, batched=True)
+    tokenized_dataset = dataset.map(lambda x: tokenize_function(x, tokenizer), batched=True)
     return tokenized_dataset
 
 

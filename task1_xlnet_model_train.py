@@ -14,7 +14,7 @@ if __name__ == '__main__':
     os.makedirs(training_args.logging_dir, exist_ok=True)
 
     # 可替换为其它模型，如 Roberta、BERT
-    model_path = "./xlnet_model"
+    model_path = "./xlnet_model/xlnet-base-cased"
     if not os.path.isdir(model_path):
         raise FileNotFoundError(f"Model directory not found: {model_path}")
 
@@ -57,8 +57,9 @@ if __name__ == '__main__':
     # print(trainer.state.log_history)
 
     # save model
-    model.save_pretrained("./xlnet_model")
-    tokenizer.save_pretrained("./xlnet_model")
+    save_model_path = "./save_model/task1_xlnet-base-cased_template1"
+    model.save_pretrained(save_model_path)
+    tokenizer.save_pretrained(save_model_path)
     # load model
     # model = XLNetForSequenceClassification.from_pretrained("./xlnet_model")
     # tokenizer = XLNetTokenizer.from_pretrained("./xlnet_model")
