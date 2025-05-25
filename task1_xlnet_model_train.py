@@ -14,13 +14,14 @@ if __name__ == '__main__':
     os.makedirs(training_args.logging_dir, exist_ok=True)
 
     # 可替换为其它模型，如 Roberta、BERT
-    model_path = "./xlnet_model/xlnet-base-cased"
+    model_path = "./xlnet_model/xlnet-large-cased"
+    print("Using model", model_path)
     if not os.path.isdir(model_path):
         raise FileNotFoundError(f"Model directory not found: {model_path}")
 
     model = XLNetForSequenceClassification.from_pretrained(
         model_path,
-        num_labels=3,
+        num_labels=2,
         dropout=0.1,
     ).to(device)
     tokenizer = XLNetTokenizer.from_pretrained(model_path)
@@ -28,17 +29,14 @@ if __name__ == '__main__':
     prompt_templates = [
         "{Sent1} <sep> {Sent2}",
         "{Sent1} is more reasonable than {Sent2}",
-        "Which is in common sense {Sent1} or {Sent2}?",
+        "Which is in common sense {Sent1} or {Sent2}",
     ]
-    template = prompt_templates[1]
+    template = prompt_templates[2]
     print("Using prompt template:", template)
 
     train_dataset = utils.preprocess_task1("./ALL data/train.csv", tokenizer, template)
-    print("Train samples:", len(train_dataset))
     valid_dataset = utils.preprocess_task1("./ALL data/dev.csv", tokenizer, template)
-    print("Validation samples:", len(valid_dataset))
     test_dataset = utils.preprocess_task1("./ALL data/test.csv", tokenizer, template)
-    print("Test samples:", len(test_dataset))
 
     train_log_path, eval_log_path = utils.get_log_path()
 
@@ -51,19 +49,24 @@ if __name__ == '__main__':
         train_log_path=train_log_path,
         eval_log_path=eval_log_path
     )
-
     trainer.train()
+    print("-"*20)
     print("Training finished.")
+    print("-"*20)
     # print(trainer.state.log_history)
-
-    # save model
-    save_model_path = "./save_model/task1_xlnet-base-cased_template1"
-    model.save_pretrained(save_model_path)
-    tokenizer.save_pretrained(save_model_path)
-    # load model
-    # model = XLNetForSequenceClassification.from_pretrained("./xlnet_model")
-    # tokenizer = XLNetTokenizer.from_pretrained("./xlnet_model")
 
     test_results = trainer.predict(test_dataset)
     print(test_results.metrics)
     print(f"Test Accuracy: {test_results.metrics['test_accuracy']:.4f}")
+
+    # save model
+    save_model_path = "./save_model/task1_xlnet-large-cased_template2_2"
+    model.save_pretrained(save_model_path)
+    tokenizer.save_pretrained(save_model_path)
+    print("save model to", save_model_path)
+
+    # load model
+    # model = XLNetForSequenceClassification.from_pretrained("./xlnet_model")
+    # tokenizer = XLNetTokenizer.from_pretrained("./xlnet_model")
+
+

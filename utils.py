@@ -10,6 +10,23 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 
 
+def tokenize_function_2(examples, tokenizer):
+    encoded = tokenizer(
+        examples["text"],
+        truncation=True,
+        padding="max_length",
+        max_length=256,
+        return_overflowing_tokens=True,
+        return_length=True  # 可选，用于调试查看编码长度
+    )
+
+    # 检查是否有文本被截断（即有 overflow）
+    if "overflow_to_sample_mapping" in encoded and len(encoded["overflow_to_sample_mapping"]) > 0:
+        raise ValueError("Error: Some input texts are too long and were truncated.")
+
+    return encoded
+
+
 def tokenize_function(examples, tokenizer):
     return tokenizer(examples["text"], truncation=True, padding="max_length", max_length=128)
 
@@ -115,7 +132,7 @@ def preprocess_task2(file, tokenizer, prompt_template=None, sep_token="<sep>"):
         labels.append(correct_pos)
 
     dataset = Dataset.from_dict({"text": texts, "label": labels})
-    tokenized_dataset = dataset.map(lambda x: tokenize_function(x, tokenizer), batched=True)
+    tokenized_dataset = dataset.map(lambda x: tokenize_function_2(x, tokenizer), batched=True)
     return tokenized_dataset
 
 
@@ -130,6 +147,7 @@ def get_log_path(log_dir="./logs"):
     eval_log = os.path.join(log_dir, f"log_{now}_eval.csv")
     return train_log, eval_log
 
+
 def write_log_to_csv(log_dict, filepath):
     """将日志字典写入 CSV 文件（如不存在则自动添加表头）"""
     file_exists = os.path.isfile(filepath)
@@ -139,15 +157,68 @@ def write_log_to_csv(log_dict, filepath):
             writer.writeheader()
         writer.writerow(log_dict)
 
+
 class LoggingTrainer(Trainer):
     def __init__(self, *args, train_log_path=None, eval_log_path=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.train_log_path = train_log_path
         self.eval_log_path = eval_log_path
 
-    def log(self, logs):
+    def log(self, logs, iterator_start_time=None):  # 添加参数以兼容原始调用
         super().log(logs)
+
+        # 记录训练日志
         if "loss" in logs and self.train_log_path:
             write_log_to_csv(logs, self.train_log_path)
+
+        # 记录验证日志
         elif "eval_loss" in logs and self.eval_log_path:
             write_log_to_csv(logs, self.eval_log_path)
+
+
+def plot_train_loss(csv_paths, labels=None, title="Training Loss", save_path=None):
+    """
+    绘制多个实验的训练损失曲线
+    :param csv_paths: 训练 loss 的 CSV 文件路径列表
+    :param labels: 每条曲线的图例标签（可选）
+    :param title: 图表标题
+    :param save_path: 可选，保存图像的路径
+    """
+    plt.figure(figsize=(10, 6))
+    for i, path in enumerate(csv_paths):
+        df = pd.read_csv(path)
+        label = labels[i] if labels else f"Experiment {i+1}"
+        plt.plot(df["epoch"], df["loss"], label=label)
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+    if save_path:
+        plt.savefig(save_path, bbox_inches='tight')
+    plt.show()
+
+
+def plot_eval_accuracy(csv_paths, labels=None, title="Evaluation Accuracy", save_path=None):
+    """
+    绘制多个实验的验证准确率曲线
+    :param csv_paths: 验证 accuracy 的 CSV 文件路径列表
+    :param labels: 每条曲线的图例标签（可选）
+    :param title: 图表标题
+    :param save_path: 可选，保存图像的路径
+    """
+    plt.figure(figsize=(10, 6))
+    for i, path in enumerate(csv_paths):
+        df = pd.read_csv(path)
+        label = labels[i] if labels else f"Experiment {i+1}"
+        plt.plot(df["epoch"], df["eval_accuracy"], label=label)
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Evaluation Accuracy")
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+    if save_path:
+        plt.savefig(save_path, bbox_inches='tight')
+    plt.show()

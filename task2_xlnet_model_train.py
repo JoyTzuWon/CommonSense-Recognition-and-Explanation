@@ -14,7 +14,7 @@ if __name__ == '__main__':
     os.makedirs(training_args.logging_dir, exist_ok=True)
 
     # 可替换为其它模型，如 Roberta、BERT
-    model_path = "./xlnet_model/xlnet-base-cased"
+    model_path = "./xlnet_model/xlnet-large-cased"
     if not os.path.isdir(model_path):
         raise FileNotFoundError(f"Model directory not found: {model_path}")
 
@@ -31,15 +31,12 @@ if __name__ == '__main__':
         "If [Correct] is in common sense then {Incorrect} is against common sense because {R1} or {R2} or {R3}"
     ]
 
-    template = prompt_templates[1]
+    template = prompt_templates[2]
     print("Using prompt template:", template)
 
     train_dataset = utils.preprocess_task2("./ALL data/train.csv", tokenizer, template)
-    print("Train samples:", len(train_dataset))
     valid_dataset = utils.preprocess_task2("./ALL data/dev.csv", tokenizer, template)
-    print("Validation samples:", len(valid_dataset))
     test_dataset = utils.preprocess_task2("./ALL data/test.csv", tokenizer, template)
-    print("Test samples:", len(test_dataset))
 
     train_log_path, eval_log_path = utils.get_log_path()
 
@@ -54,15 +51,17 @@ if __name__ == '__main__':
     )
 
     trainer.train()
+    print("-"*20)
     print("Training finished.")
+    print("-"*20)
     # print(trainer.state.log_history)
-
-    # save model
-    save_model_path = "./save_model/task2_xlnet-base-cased_template1"
-    model.save_pretrained(save_model_path)
-    tokenizer.save_pretrained(save_model_path)
-
 
     test_results = trainer.predict(test_dataset)
     print(test_results.metrics)
     print(f"Test Accuracy: {test_results.metrics['test_accuracy']:.4f}")
+
+    # save model
+    save_model_path = "./save_model/task2_xlnet-large-cased_template2"
+    model.save_pretrained(save_model_path)
+    tokenizer.save_pretrained(save_model_path)
+    print("save model to", save_model_path)
