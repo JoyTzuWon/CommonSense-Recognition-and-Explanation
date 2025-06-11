@@ -1,4 +1,4 @@
-# 🧠 Commonsense Validation and Explanation  
+#  Commonsense Validation and Explanation  
 ### Fine-tuning Pre-trained Language Models with Ensemble Learning  
 
 ---
@@ -17,12 +17,12 @@ We explore three pre-trained models and apply ensemble learning to improve perfo
 
 ## 📌 Problem Statement
 
-### 🔹 Task A: Commonsense Validation
+###  Task A: Commonsense Validation
 
 In this task, the system is given two semantically similar sentences and must determine **which one violates commonsense**.
 
 **Example**:  
-- "He put a turkey into the fridge."  
+- "He put a turkey into the fridge."  ✅
 - "He put an elephant into the fridge."
 
 The second sentence is unreasonable because it violates physical commonsense.  
@@ -30,7 +30,7 @@ Our goal is to equip large language models (LLMs) with the ability to **distingu
 
 ---
 
-### 🔸 Task B: Commonsense Explanation
+###  Task B: Commonsense Explanation
 
 In this task, the system is provided with a **nonsensical statement** and **three possible explanations**. Only one of them explains why the statement is implausible.
 
@@ -54,12 +54,12 @@ The dataset includes two subtasks, **Task A** and **Task B**, each containing **
 
 Each task includes two files: `textdata` and `answer`, with matching indices.
 
-### 📘 Task A: Commonsense Validation
+###  Task A: Commonsense Validation
 
 - **textdata**: Contains two sentences (`sen0`, `sen1`), one of which violates commonsense.
 - **answer**: A single label (`0` or `1`) indicating the unreasonable sentence.
 
-### 📙 Task B: Commonsense Explanation
+###  Task B: Commonsense Explanation
 
 - **textdata**: Contains one nonsensical statement and three possible explanations (`A`, `B`, `C`).
 - **answer**: One correct label (`A`, `B`, or `C`) identifying the explanation that relates to why the statement is implausible.
@@ -76,14 +76,14 @@ To tackle both subtasks, we adopt an **ensemble-based method** leveraging three 
 
 Each team member fine-tunes one of the models individually.
 
-### ⚙️ Fine-Tuning Strategy
+###  Fine-Tuning Strategy
 
 - Load **frozen** pre-trained models (BERT, RoBERTa, XLNet)
 - Fine-tune **only the final classification layer**
 - For each input, use **MLM loss** to score plausibility:
   - Lower loss → stronger commonsense
 
-### 🧠 Ensemble Learning
+###  Ensemble Learning
 
 To improve robustness and accuracy, we apply **ensemble methods**:
 
@@ -96,11 +96,45 @@ To improve robustness and accuracy, we apply **ensemble methods**:
 **Templates For Two Tasks**
 
 - **Task 1**
--
--
--
+- "{Sent1} [SEP] {Sent2}"
+- "{Sent1} is more reasonable than {Sent2}"
+- "Which is in common sense {Sent1} or {Sent2}?"
 - **Task 2**
--
--
--
+- "{Incorrect} [SEP] {R1} [SEP] {R2} [SEP] {R3}"
+- "{Incorrect} is against common sense because {R1} or {R2} or {R3}."
+- "If [Correct] is in common sense then {Incorrect} is against common sense because {R1} or {R2} or {R3}"
 
+**Training Figures**
+
+- **RoBerta**
+  
+  ![](images/roberta_task1_train.png)
+  ![](images/roberta_task1_eval.png)
+  ![](images/roberta_task2_train.png)
+  ![](images/roberta_task2_eval.png)
+
+- **XLNet**
+
+  ![](images/xlnet_task1_train.png)
+  ![](images/xlnet_task1_eval.png)
+  ![](images/xlnet_task2_train.png)
+  ![](images/xlnet_task2_eval.png)
+
+- **Bert**
+
+  ![](images/bert_task1_train.png)
+  ![](images/bert_task1_eval.png)
+  ![](images/bert_task2_train.png)
+  ![](images/bert_task2_eval.png)
+
+**Ensemble Result**
+
+- **Task 1**
+  ![template 0](images/task1_tem0.png)
+  ![template 1](images/task1_tem1.png)
+  ![template 2](images/task1_tem2.png)
+
+- **Task 2**
+  ![template 0](images/task2_tem0.png)
+  ![template 1](images/task2_tem1.png)
+  ![template 2](images/task2_tem2.png)
