@@ -27,8 +27,11 @@ def tokenize_function_2(examples, tokenizer):
     return encoded
 
 
-def tokenize_function(examples, tokenizer):
-    return tokenizer(examples["text"], truncation=True, padding="max_length", max_length=128)
+def tokenize_function(examples, tokenizer, padding = True):
+    if padding:
+        return tokenizer(examples["text"], truncation=True, padding="max_length", max_length=128)
+    else:
+        return tokenizer(examples["text"])
 
 
 def compute_metrics(eval_pred):
@@ -38,7 +41,8 @@ def compute_metrics(eval_pred):
     return {"accuracy": accuracy}
 
 
-def preprocess_task1(file, tokenizer, prompt_template=None, sep_token="<sep>"):
+def preprocess_task1(file, tokenizer, prompt_template=None, sep_token="<sep>",
+                     is_random=True, padding=True):
     # 文件存在性检查
     if not os.path.isfile(file):
         raise FileNotFoundError(f"Data file not found: {file}")
@@ -57,22 +61,26 @@ def preprocess_task1(file, tokenizer, prompt_template=None, sep_token="<sep>"):
         correct = row["Correct Statement"]
         incorrect = row["Incorrect Statement"]
         p = random.random()
-
-        if p < 0.5:
+        if is_random:
+            if p < 0.5:
+                first, second = correct, incorrect
+                label = 0
+            else:
+                first, second = incorrect, correct
+                label = 1
+        else:
             first, second = correct, incorrect
             label = 0
-        else:
-            first, second = incorrect, correct
-            label = 1
 
         text = prompt_template.format(Sent1=first, Sent2=second)
         text = text.replace("<sep>", sep_token)
         data.append((text, label))
 
-    random.shuffle(data)
+    if is_random:
+        random.shuffle(data)
     texts, labels = zip(*data)
     dataset = Dataset.from_dict({"text": texts, "label": labels})
-    tokenized_dataset = dataset.map(lambda x: tokenize_function(x, tokenizer), batched=True)
+    tokenized_dataset = dataset.map(lambda x: tokenize_function(x, tokenizer, padding), batched=True)
     return tokenized_dataset
 
 
